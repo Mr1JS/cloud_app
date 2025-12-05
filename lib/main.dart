@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_app/LoginSignupCom/LoginPage.dart';
-import 'package:cloud_app/myHomePage.dart';
+import 'package:cloud_app/LoginSignupPage/LoginSignupCom/LoginPage.dart';
+import 'package:cloud_app/HomePage/myHomePage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

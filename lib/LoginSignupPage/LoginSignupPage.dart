@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_app/myHomePage.dart';
-import 'package:cloud_app/LoginSignupCom/LoginPage.dart';
-import 'package:cloud_app/LoginSignupCom/SignUpPage.dart';
+import 'package:cloud_app/HomePage/myHomePage.dart';
+import 'package:cloud_app/LoginSignupPage/LoginSignupCom/LoginPage.dart';
+import 'package:cloud_app/LoginSignupPage/LoginSignupCom/SignUpPage.dart';
 import 'package:cloud_app/auth_service.dart';
 
 class Loginsignuppage extends StatefulWidget {

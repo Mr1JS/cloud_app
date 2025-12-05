@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_app/LoginSignupCom/LoginSignupPage.dart';
+import 'package:cloud_app/LoginSignupPage/LoginSignupPage.dart';
 
 class LogInPage extends StatelessWidget {
   const LogInPage({super.key});

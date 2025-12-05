@@ -1,5 +1,6 @@
+import 'package:cloud_app/HomePage/components/storageBarDelegate.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_app/LoginSignupCom/LoginPage.dart';
+import 'package:cloud_app/LoginSignupPage/LoginSignupCom/LoginPage.dart';
 import 'package:cloud_app/auth_service.dart';
 
 class MyHomePage extends StatelessWidget {
@@ -33,18 +34,7 @@ class MyHomePage extends StatelessWidget {
             pinned: true,
           ),
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(13.0),
-              child: Container(
-                height: 400,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.0),
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-          ),
+          SliverPersistentHeader(delegate: Storagebardelegate(), pinned: true),
 
           SliverToBoxAdapter(
             child: Padding(
