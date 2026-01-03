@@ -1,66 +1,90 @@
-import 'package:cloud_app/HomePage/components/storageBarDelegate.dart';
+import 'package:cloud_app/HomePage/components/mobileWidgetBody.dart';
+import 'package:cloud_app/HomePage/components/webWidgbetBody.dart';
+import 'package:cloud_app/HomePage/controller/homeController.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_app/LoginSignupPage/LoginSignupCom/LoginPage.dart';
-import 'package:cloud_app/auth_service.dart';
+import 'package:get/get.dart';
 
 class MyHomePage extends StatelessWidget {
-  final _auth = AuthService();
-
-  late final user = (_auth.getUserEmail()!).split('@')[0];
-
   MyHomePage({super.key});
+
+  final HomeController homeController = Get.put(
+    HomeController(),
+    permanent: false,
+  );
+
+  Future<void> _openUploadDialog() async {
+    final userId = homeController.auth.getCurrentUser()?.id;
+    if (userId == null) return;
+
+    final folderCtrl = TextEditingController();
+
+    final result = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Upload Files'),
+        content: Row(
+          children: [
+            Text(
+              "\$ ${homeController.currentUsername ?? ''} / ",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: folderCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'Folder name (optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Upload'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      final folder = folderCtrl.text.trim();
+
+      // Upload files
+      final uploadedUrls = await homeController.storage.uploadMultipleFiles(
+        userId: userId,
+        folder: folder.isEmpty ? 'uploads' : folder,
+      );
+
+      if (uploadedUrls.isNotEmpty) {
+        // Refresh ONLY the file list
+        homeController.refreshFiles(); // Also refresh controller
+
+        Get.showSnackbar(
+          GetSnackBar(
+            message: '${uploadedUrls.length} file(s) uploaded!',
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          SliverAppBar(
-            title: Text("User: $user"),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  _auth.signOut();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LogInPage()),
-                  );
-                },
-                icon: Icon(Icons.logout),
-              ),
-            ],
-            centerTitle: true,
-            expandedHeight: 200,
-            pinned: true,
-          ),
-
-          SliverPersistentHeader(delegate: Storagebardelegate(), pinned: true),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(13.0),
-              child: Container(
-                height: 400,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.0),
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(13.0),
-              child: Container(
-                height: 400,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.0),
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-          ),
-        ],
+      body: isMobile ? const MobileWidgetBody() : const WebWidgetBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openUploadDialog,
+        child: const Icon(Icons.upload),
       ),
     );
   }
