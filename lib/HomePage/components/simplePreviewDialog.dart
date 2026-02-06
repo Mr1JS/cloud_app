@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class SimplePreviewDialog extends StatelessWidget {
   final String fileName;
@@ -26,9 +27,9 @@ class SimplePreviewDialog extends StatelessWidget {
           Expanded(child: Text(fileName)),
         ],
       ),
-      content: Container(
-        width: 300,
-        height: 300,
+      content: SizedBox(
+        width: 500,
+        height: 500,
         child: _buildContent(fullPath, extension),
       ),
       actions: [
@@ -58,6 +59,12 @@ class SimplePreviewDialog extends StatelessWidget {
       'html',
       'css',
       'md',
+      'c',
+      'cpp',
+      'java',
+      'py',
+      'sh',
+      'ts',
     ].contains(extension)) {
       return FutureBuilder<String>(
         future: _loadTextFile(path),
@@ -66,9 +73,34 @@ class SimplePreviewDialog extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) return Center(child: Text('Error loading'));
-          return SingleChildScrollView(
-            child: Text(snapshot.data ?? 'Empty file'),
+          return Scrollbar(
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(8),
+              child: SelectableText(
+                snapshot.data ?? 'Empty file',
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+              ),
+            ),
           );
+        },
+      );
+    }
+
+    // PDF preview - Using signed URL
+    if (extension == 'pdf') {
+      return FutureBuilder(
+        future: _GetPDFUrl(path),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error loading'));
+          }
+
+          return SfPdfViewer.network(snapshot.data!, enableTextSelection: true);
         },
       );
     }
@@ -97,10 +129,19 @@ class SimplePreviewDialog extends StatelessWidget {
     }
   }
 
+  Future<String> _GetPDFUrl(String path) async {
+    final response = Supabase.instance.client.storage
+        .from('userdata')
+        .getPublicUrl(path);
+
+    return response;
+  }
+
   IconData _getIcon(String extension) {
     if (['jpg', 'jpeg', 'png', 'gif'].contains(extension)) return Icons.image;
-    if (['txt', 'dart', 'js', 'json'].contains(extension))
+    if (['txt', 'dart', 'js', 'json'].contains(extension)) {
       return Icons.text_snippet;
+    }
     if (['pdf'].contains(extension)) return Icons.picture_as_pdf;
     return Icons.insert_drive_file;
   }

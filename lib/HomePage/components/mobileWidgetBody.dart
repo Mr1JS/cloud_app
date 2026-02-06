@@ -209,7 +209,9 @@ class _MobileWidgetBodyState extends State<MobileWidgetBody> {
                 Icon(Icons.folder_open, size: 80),
                 const SizedBox(height: 16),
                 Text(
-                  searchBar.query.isEmpty ? 'No files yet' : 'No results found',
+                  searchBar.query.isEmpty
+                      ? 'No files uploaded yet'
+                      : 'No results found',
                   style: TextStyle(fontSize: 18),
                 ),
                 if (searchBar.query.isNotEmpty)
