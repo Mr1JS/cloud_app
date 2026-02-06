@@ -1,4 +1,4 @@
-import 'package:cloud_app/HomePage/components/avatarWidget.dart';
+import 'package:cloud_app/Screens/Home/Widgets/avatar_widget.dart';
 import 'package:flutter/material.dart';
 
 class ProfileDialog extends StatelessWidget {

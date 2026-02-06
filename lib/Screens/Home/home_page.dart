@@ -1,6 +1,6 @@
-import 'package:cloud_app/HomePage/components/mobileWidgetBody.dart';
-import 'package:cloud_app/HomePage/components/webWidgbetBody.dart';
-import 'package:cloud_app/HomePage/controller/homeController.dart';
+import 'package:cloud_app/Screens/Home/Widgets/mobile_body.dart';
+import 'package:cloud_app/Screens/Home/Widgets/web_body.dart';
+import 'package:cloud_app/Screens/Home/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

@@ -1,9 +1,9 @@
-import 'package:cloud_app/HomePage/components/fileSystem.dart';
-import 'package:cloud_app/HomePage/components/profileDialog.dart';
-import 'package:cloud_app/HomePage/components/simplePreviewDialog.dart';
-import 'package:cloud_app/HomePage/storageService.dart';
-import 'package:cloud_app/LoginSignupPage/LoginSignupCom/LoginPage.dart';
-import 'package:cloud_app/auth_service.dart';
+import 'package:cloud_app/Screens/Home/Widgets/file_system_view.dart';
+import 'package:cloud_app/Screens/Home/Widgets/profile_dialog.dart';
+import 'package:cloud_app/Screens/Home/Widgets/preview_dialog.dart';
+import 'package:cloud_app/Services/storage_service.dart';
+import 'package:cloud_app/Screens/Auth/login_page.dart';
+import 'package:cloud_app/Services/auth_service.dart';
 import 'package:download/download.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

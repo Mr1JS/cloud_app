@@ -1,7 +1,7 @@
-import 'package:cloud_app/Theme/ui_theme.dart';
+import 'package:cloud_app/Themes/ui_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_app/LoginSignupPage/LoginSignupCom/LoginPage.dart';
-import 'package:cloud_app/HomePage/myHomePage.dart';
+import 'package:cloud_app/Screens/Auth/login_page.dart';
+import 'package:cloud_app/Screens/Home/home_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';

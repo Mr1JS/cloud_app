@@ -1,7 +1,7 @@
-import 'package:cloud_app/HomePage/components/avatarWidget.dart';
-import 'package:cloud_app/HomePage/components/fileSystem.dart';
-import 'package:cloud_app/HomePage/components/searchBar.dart';
-import 'package:cloud_app/HomePage/controller/homeController.dart';
+import 'package:cloud_app/Screens/Home/Widgets/avatar_widget.dart';
+import 'package:cloud_app/Screens/Home/Widgets/file_system_view.dart';
+import 'package:cloud_app/Screens/Home/Widgets/search_bar.dart';
+import 'package:cloud_app/Screens/Home/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:primer_progress_bar/primer_progress_bar.dart';

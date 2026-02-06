@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_app/HomePage/myHomePage.dart';
-import 'package:cloud_app/LoginSignupPage/LoginSignupCom/LoginPage.dart';
-import 'package:cloud_app/LoginSignupPage/LoginSignupCom/SignUpPage.dart';
-import 'package:cloud_app/auth_service.dart';
+import 'package:cloud_app/Screens/Home/home_page.dart';
+import 'package:cloud_app/Screens/Auth/login_page.dart';
+import 'package:cloud_app/Screens/Auth/signup_page.dart';
+import 'package:cloud_app/Services/auth_service.dart';
 
 class Loginsignuppage extends StatefulWidget {
   const Loginsignuppage({super.key, required this.isLoginPage});
