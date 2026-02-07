@@ -55,5 +55,20 @@
 	<string>Explanation on why the microphone access is needed.</string>
 	<!-- End -->
 
+	<!-- Google Sign In -->
+	<!-- Put me in the [my_project]/ios/Runner/Info.plist file -->
+	<!-- Google Sign-in Section -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.302536793591-k8n9kul6od74ikmn6rhv651u0a9cbumi</string>
+			</array>
+		</dict>
+	</array>
+	<!-- End of the Google Sign-in Section -->
 </dict>
 </plist>

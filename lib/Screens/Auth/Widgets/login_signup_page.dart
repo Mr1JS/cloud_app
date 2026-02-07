@@ -91,6 +91,40 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _auth.signInWithGoogle();
+
+      // NEU: Warte auf Auth State Change
+      await for (final authState in _auth.authChanges) {
+        if (authState.session != null) {
+          if (!mounted) return;
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => MyHomePage()),
+          );
+          break; // Wichtig: Loop beenden
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text("Google Sign In failed: ${e.toString()}"),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLogin = widget.isLoginPage;
@@ -333,7 +367,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(10),
-                      onTap: _isLoading ? null : () {},
+                      onTap: _isLoading ? null : _handleGoogleSignIn,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
