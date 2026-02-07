@@ -273,52 +273,78 @@ class HomeController extends GetxController {
     return files.take(limit).toList();
   }
 
-  // collect storage usage overview by file type
+  // collect storage usage for storage overview bar
   Map<String, int> getStorageOverview() {
     final fs = _fileSystem.value;
     if (fs == null) return {};
 
     final files = fs.getAllFilesFlat();
-    final result = {'images': 0, 'documents': 0, 'videos': 0, 'other': 0};
+
+    int images = 0;
+    int documents = 0;
+    int videos = 0;
+    int other = 0;
 
     for (final file in files) {
-      if (file.isImageFile()) {
-        result['images'] = result['images']! + 1;
-      } else if (file.isDocumentFile()) {
-        result['documents'] = result['documents']! + 1;
-      } else if (file.isVideoFile()) {
-        result['videos'] = result['videos']! + 1;
+      final ext = file.name.toLowerCase().split('.').last;
+
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(ext)) {
+        images++;
+      } else if (['pdf', 'doc', 'docx', 'txt'].contains(ext)) {
+        documents++;
+      } else if (['mp4', 'mov', 'avi', 'mkv'].contains(ext)) {
+        videos++;
       } else {
-        result['other'] = result['other']! + 1;
+        other++;
       }
     }
 
-    return result;
+    return {
+      'images': images,
+      'documents': documents,
+      'videos': videos,
+      'other': other,
+    };
   }
 
   // build storage overview bar
   List<Segment> buildStorageSegments() {
     final data = getStorageOverview();
-    final total = data.values.fold<int>(0, (a, b) => a + b);
+    final totalFiles = data.values.fold<int>(0, (a, b) => a + b);
+    if (totalFiles == 0) return [];
 
-    if (total == 0) return [];
+    int images = ((data['images']! / totalFiles) * 100).round();
+    int docs = ((data['documents']! / totalFiles) * 100).round();
+    int videos = ((data['videos']! / totalFiles) * 100).round();
+
+    int used = images + docs + videos;
+    int other = 100 - used; // force total to 100
 
     return [
-      _buildSegment('images', data, total, Colors.red, 'Images'),
-      _buildSegment('documents', data, total, Colors.blue, 'Docs'),
-      _buildSegment('videos', data, total, Colors.green, 'Videos'),
-      _buildSegment('other', data, total, Colors.grey, 'Other'),
+      Segment(
+        color: Colors.red,
+        value: images,
+        label: const Text('Images'),
+        valueLabel: Text('$images%'),
+      ),
+      Segment(
+        color: Colors.blue,
+        value: docs,
+        label: const Text('Docs'),
+        valueLabel: Text('$docs%'),
+      ),
+      Segment(
+        color: Colors.green,
+        value: videos,
+        label: const Text('Videos'),
+        valueLabel: Text('$videos%'),
+      ),
+      Segment(
+        color: Colors.grey,
+        value: other,
+        label: const Text('Other'),
+        valueLabel: Text('$other%'),
+      ),
     ];
-  }
-
-  Segment _buildSegment(
-    String key,
-    Map<String, int> data,
-    int total,
-    Color color,
-    String label,
-  ) {
-    final value = ((data[key]! / total) * 100).round();
-    return Segment(color: color, value: value, label: Text(label));
   }
 }
