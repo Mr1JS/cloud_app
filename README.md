@@ -89,10 +89,12 @@ For Android, set `minSdk` to 21 in `android/app/build.gradle`.
 ### 4. Run
 
 ```bash
-flutter run -d chrome  # web
+lutter run -d chrome --web-hostname localhost --web-port 3000  # web
 flutter run -d ios     # iOS
 flutter run -d android # Android
 ```
+
+! Note: In web server can only be started in port 3000
 
 ## Project Structure
 
