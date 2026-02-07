@@ -91,6 +91,29 @@ class StorageService {
     return result?.files.firstOrNull;
   }
 
+  // IMAGE PICKING
+  // Upload from Camera (Web + Mobile)
+  Future<String?> uploadImageFromCamera({
+    required String userId,
+    required String folder,
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    final path = '$userId/$folder/$filename';
+
+    await supabase.storage
+        .from(_bucket)
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(upsert: true, contentType: 'image/jpeg'),
+        );
+
+    return getPublicUrl(path);
+  }
+  //
+
+  // FILE PICKING
   // Pick multiple files
   Future<List<PlatformFile>> pickMultipleFiles() async {
     final result = await FilePicker.platform.pickFiles(

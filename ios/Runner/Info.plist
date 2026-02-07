@@ -45,5 +45,15 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Ask User Camera and Gallery Permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>Cloud App needs camera access to take and upload photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Cloud App needs photo library access to select photos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Explanation on why the microphone access is needed.</string>
+	<!-- End -->
+
 </dict>
 </plist>

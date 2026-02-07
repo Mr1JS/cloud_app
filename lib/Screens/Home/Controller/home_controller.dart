@@ -1,3 +1,4 @@
+import 'package:cloud_app/Screens/Camera/camera_screen.dart';
 import 'package:cloud_app/Screens/Home/Widgets/file_item.dart';
 import 'package:cloud_app/Screens/Home/Widgets/file_system_manager.dart';
 import 'package:cloud_app/Screens/Home/Widgets/profile_dialog.dart';
@@ -102,10 +103,54 @@ class HomeController extends GetxController {
               final userId = _auth.currentUser?.id;
               if (userId == null) return;
 
-              final url = await _storage.uploadProfileImage(
-                userId: userId,
-                pathSuffix: 'profile',
+              // choose camera or gallery
+              final useCamera = await Get.dialog<bool>(
+                AlertDialog(
+                  title: const Text('Choose Source'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.camera_alt),
+                        title: const Text('Camera'),
+                        onTap: () => Get.back(result: true),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.photo_library),
+                        title: const Text('Gallery'),
+                        onTap: () => Get.back(result: false),
+                      ),
+                    ],
+                  ),
+                ),
               );
+
+              if (useCamera == null) return;
+
+              String? url;
+
+              if (useCamera) {
+                // Camera
+                final result = await Navigator.of(Get.context!)
+                    .push<Map<String, dynamic>>(
+                      MaterialPageRoute(builder: (_) => const CameraScreen()),
+                    );
+
+                if (result != null) {
+                  url = await _storage.uploadImageFromCamera(
+                    userId: userId,
+                    folder: 'profile',
+                    bytes: result['bytes'],
+                    filename: 'profile_image',
+                  );
+                }
+              } else {
+                // Gallery
+                url = await _storage.uploadProfileImage(
+                  userId: userId,
+                  pathSuffix: 'profile',
+                );
+              }
 
               if (url != null) {
                 setDialogState(() => dialogImageUrl = url);
