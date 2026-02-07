@@ -91,13 +91,13 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
     }
   }
 
+  // Google Sign-In Handler
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
 
     try {
       await _auth.signInWithGoogle();
 
-      // NEU: Warte auf Auth State Change
       await for (final authState in _auth.authChanges) {
         if (authState.session != null) {
           if (!mounted) return;
@@ -106,7 +106,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
             context,
             MaterialPageRoute(builder: (context) => MyHomePage()),
           );
-          break; // Wichtig: Loop beenden
+          break;
         }
       }
     } catch (e) {

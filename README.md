@@ -84,7 +84,7 @@ For iOS, add to `ios/Runner/Info.plist`:
 <string>Explanation on why the microphone access is needed.</string>
 ```
 
-For Android, set `minSdkVersion` to 21 in `android/app/build.gradle`.
+For Android, set `minSdk` to 21 in `android/app/build.gradle`.
 
 ### 4. Run
 
