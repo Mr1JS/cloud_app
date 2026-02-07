@@ -2,32 +2,33 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
   // Supabase instance
-  final supabase = Supabase.instance.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  // signUp
+  // get Supabase client
+  SupabaseClient get supabaseClient => _supabase;
+
+  // Sign up with email and password
   Future<AuthResponse> signUp(String email, String password) {
-    return supabase.auth.signUp(email: email, password: password);
+    return _supabase.auth.signUp(email: email, password: password);
   }
 
-  // logIn
+  // Log in with email and password
   Future<AuthResponse> logIn(String email, String password) {
-    return supabase.auth.signInWithPassword(email: email, password: password);
+    return _supabase.auth.signInWithPassword(email: email, password: password);
   }
 
-  // Sign Out
-  Future<void> signOut() => supabase.auth.signOut();
+  // Sign out
+  Future<void> signOut() => _supabase.auth.signOut();
 
-  // Get all user Seassions
-  Session? getSession() => supabase.auth.currentSession;
+  // Get current session
+  Session? get session => _supabase.auth.currentSession;
 
   // Get current user
-  User? getCurrentUser() => supabase.auth.currentUser;
+  User? get currentUser => _supabase.auth.currentUser;
 
-  // Get user's email
-  String? getUserEmail() {
-    return supabase.auth.currentUser?.email;
-  }
+  // Get current user's email
+  String? get userEmail => currentUser?.email;
 
-  // here it notifies whenever user signs or logs out
-  Stream<AuthState> get authChanges => supabase.auth.onAuthStateChange;
+  // Listen to auth state changes
+  Stream<AuthState> get authChanges => _supabase.auth.onAuthStateChange;
 }

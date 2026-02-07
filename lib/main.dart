@@ -7,13 +7,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';
 
 Future<void> main() async {
-  await dotenv.load(fileName: ".env");
+  // Ensure Flutter bindings are initialized before loading .env
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+
+  // Initialize Supabase with --> URL and anon key
   await Supabase.initialize(
     url: dotenv.get('url'),
     anonKey: dotenv.get('anonKey'),
   );
-  runApp(MyApp());
+
+  // App
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -23,18 +28,20 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Flutter Demo',
-      theme: UiTheme.light,
-      darkTheme: UiTheme.dark,
-      themeMode: ThemeMode.system,
+      theme: UiTheme.lightTheme,
+      darkTheme: UiTheme.darkTheme,
+      themeMode: ThemeMode.system, // System says dark or light mode
+      // Listen to auth state changes and show --> login page or the home page
       home: StreamBuilder<AuthState>(
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, snapshot) {
           final session = snapshot.data?.session;
 
+          // Session is null --> means user is not logged in --> show login page
           if (session == null) {
             return const LogInPage();
           }
-
+          // Session exists --> user is logged in --> show home page
           return MyHomePage();
         },
       ),

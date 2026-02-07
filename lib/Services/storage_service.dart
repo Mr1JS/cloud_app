@@ -1,19 +1,17 @@
-import 'dart:typed_data';
+import 'dart:typed_data'; // For Uint8List
+
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StorageService {
+  // Bucket name + init Supabase client
   static const String _bucket = 'userdata';
-
   final SupabaseClient supabase;
-
   StorageService(this.supabase);
 
-  /// ─────────────────────────────────────────────────────────────
-  /// CONTENT TYPE HELPERS
-  /// ─────────────────────────────────────────────────────────────
+  // CONTENT TYPE
+
   String contentTypeFromFilename(String filename) {
     final ext = filename.split('.').last.toLowerCase();
 
@@ -49,7 +47,7 @@ class StorageService {
       case 'pptx':
         return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
-      // Text / Code
+      // Text
       case 'txt':
         return 'text/plain';
       case 'csv':
@@ -82,10 +80,7 @@ class StorageService {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // IMAGE PICKER (avatars, profile pictures)
-  // ─────────────────────────────────────────────────────────────
-
+  // Pcik any image format
   Future<PlatformFile?> pickSingleImage() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
@@ -93,139 +88,123 @@ class StorageService {
       withData: true, // IMPORTANT for web
     );
 
-    if (result == null || result.files.isEmpty) return null;
-    return result.files.first;
+    return result?.files.firstOrNull;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // MULTI FILE PICKER (FAB uploads)
-  // ─────────────────────────────────────────────────────────────
-
+  // Pick multiple files
   Future<List<PlatformFile>> pickMultipleFiles() async {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       withData: true,
     );
 
-    if (result == null) return [];
-    return result.files;
+    return result?.files ?? [];
   }
+  //
 
-  /// ─────────────────────────────────────────────────────────────
-  // LIST ALL USER FILE PATHS
-  // ─────────────────────────────────────────────────────────────
-  /// ─────────────────────────────────────────────────────────────
-  // LIST ALL USER FILE PATHS WITH TIMESTAMPS
-  // ─────────────────────────────────────────────────────────────
+  // List all files for a user with timestamps
   Future<List<Map<String, dynamic>>> listAllUserFilePaths({
     required String userId,
     String? subPath,
   }) async {
     final path = subPath == null ? userId : '$userId/$subPath';
-    final objects = await supabase.storage.from('userdata').list(path: path);
+    final objects = await supabase.storage.from(_bucket).list(path: path);
 
-    List<Map<String, dynamic>> allItems = [];
+    final List<Map<String, dynamic>> results = [];
 
     for (final obj in objects) {
-      if (obj.name == ".emptyFolderPlaceholder" ||
-          obj.name == "profile" ||
-          obj.name == "profile_image") {
-        continue;
-      }
+      if (_isIgnored(obj.name)) continue;
 
       final isFolder = obj.id == null;
       final fullPath = subPath == null ? obj.name : '$subPath/${obj.name}';
 
       if (isFolder) {
-        // Recursion into folder
-        final subFiles = await listAllUserFilePaths(
-          userId: userId,
-          subPath: fullPath,
+        results.addAll(
+          await listAllUserFilePaths(userId: userId, subPath: fullPath),
         );
-        allItems.addAll(subFiles);
       } else {
-        // Add file with metadata
-        print("The File $fullPath and date ${obj.updatedAt}");
-        allItems.add({
+        results.add({
           'path': fullPath,
-          'updatedAt': obj.updatedAt,
           'name': obj.name,
+          'updatedAt': obj.updatedAt,
         });
       }
     }
 
-    return allItems;
+    return results;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // UPLOAD IMAGE (profile, avatar)
-  // ─────────────────────────────────────────────────────────────
+  // paths we do not want to show in the UI (Internal stuff)
+  bool _isIgnored(String name) {
+    return name == '.emptyFolderPlaceholder' ||
+        name == 'profile' ||
+        name == 'profile_image';
+  }
 
+  // Upload profile image
   Future<String?> uploadProfileImage({
     required String userId,
-    required String pathSuffix, // e.g. profile, logo
+    required String pathSuffix, // --> profile/
   }) async {
     final file = await pickSingleImage();
-    if (file == null) return null;
+    if (file?.bytes == null) return null;
 
-    final Uint8List bytes = file.bytes!;
-    final String mimeType = contentTypeFromFilename(file.name);
-    final String path = "$userId/$pathSuffix/profile_image";
+    //            USER-ID / profile / profile_image (save here)
+    final path = '$userId/$pathSuffix/profile_image';
 
     await supabase.storage
         .from(_bucket)
         .uploadBinary(
           path,
-          bytes,
-          fileOptions: FileOptions(upsert: true, contentType: mimeType),
+          file!.bytes!,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: contentTypeFromFilename(file.name),
+          ),
         );
 
-    return getPublicUrlRaw(path);
+    return getPublicUrl(path);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // UPLOAD MULTIPLE FILES (FAB)
-  // ─────────────────────────────────────────────────────────────
-
+  // Upload multiple files to a folder
   Future<List<String>> uploadMultipleFiles({
     required String userId,
-    required String folder, // e.g. "uploads"
+    required String folder,
   }) async {
     final files = await pickMultipleFiles();
-    if (files.isEmpty) return [];
-
-    List<String> uploadedUrls = [];
+    final urls = <String>[];
 
     for (final file in files) {
       if (file.bytes == null) continue;
 
-      final String mimeType = contentTypeFromFilename(file.name);
-      final path = "$userId/$folder/${file.name}";
+      final path = '$userId/$folder/${file.name}';
 
       await supabase.storage
           .from(_bucket)
           .uploadBinary(
             path,
             file.bytes!,
-            fileOptions: FileOptions(upsert: true, contentType: mimeType),
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: contentTypeFromFilename(file.name),
+            ),
           );
 
-      uploadedUrls.add(getPublicUrlRaw(path));
+      urls.add(getPublicUrl(path));
     }
 
-    return uploadedUrls;
+    return urls;
   }
 
-  Future<Uint8List> downloadFile(String fullpath) {
-    return supabase.storage.from(_bucket).download(fullpath);
+  // Download file as bytes
+  Future<Uint8List> downloadFile(String path) {
+    return supabase.storage.from(_bucket).download(path);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // URL HELPERS
-  // ─────────────────────────────────────────────────────────────
-
-  String getPublicUrlRaw(String fullPath) {
-    final url = supabase.storage.from(_bucket).getPublicUrl(fullPath);
+  //
+  // URL Helper functions
+  String getPublicUrl(String path) {
+    final url = supabase.storage.from(_bucket).getPublicUrl(path);
 
     return Uri.parse(url)
         .replace(
@@ -236,28 +215,21 @@ class StorageService {
         .toString();
   }
 
-  Future<bool?> urlExists(String url) async {
+  // Check if URL exists
+  Future<bool> urlExists(String url) async {
     try {
       final response = await http.head(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        return true;
-      }
-
-      return null;
+      return response.statusCode == 200;
     } catch (_) {
-      return null;
+      return false;
     }
   }
 
+  // Check if profile image exists
   Future<String?> profileImageUrl(String userId) async {
-    final url = getPublicUrlRaw('$userId/profile/profile_image');
-
-    final exists = await urlExists(url);
-    if (exists == true) {
-      return url;
-    }
-
-    return null;
+    final url = getPublicUrl('$userId/profile/profile_image');
+    return await urlExists(url) ? url : null;
   }
+
+  //
 }

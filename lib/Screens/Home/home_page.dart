@@ -1,22 +1,23 @@
-import 'package:cloud_app/Screens/Home/Widgets/mobile_body.dart';
-import 'package:cloud_app/Screens/Home/Widgets/web_body.dart';
-import 'package:cloud_app/Screens/Home/home_controller.dart';
+import 'package:cloud_app/Screens/Home/mobile_body.dart';
+import 'package:cloud_app/Screens/Home/web_body.dart';
+import 'package:cloud_app/Screens/Home/Controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class MyHomePage extends StatelessWidget {
   MyHomePage({super.key});
 
-  final HomeController homeController = Get.put(
+  late final HomeController homeController = Get.put(
     HomeController(),
     permanent: false,
   );
 
+  // Display dialog to upload files
   Future<void> _openUploadDialog() async {
-    final userId = homeController.auth.getCurrentUser()?.id;
+    final userId = homeController.auth.currentUser?.id;
     if (userId == null) return;
 
-    final folderCtrl = TextEditingController();
+    final folderController = TextEditingController();
 
     final result = await Get.dialog<bool>(
       AlertDialog(
@@ -24,13 +25,13 @@ class MyHomePage extends StatelessWidget {
         content: Row(
           children: [
             Text(
-              "\$ ${homeController.currentUsername ?? ''} / ",
+              "\$ ${homeController.currentUsername} / ",
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: TextField(
-                controller: folderCtrl,
+                controller: folderController,
                 decoration: const InputDecoration(
                   hintText: 'Folder name (optional)',
                   border: OutlineInputBorder(),
@@ -52,28 +53,26 @@ class MyHomePage extends StatelessWidget {
       ),
     );
 
-    if (result == true) {
-      final folder = folderCtrl.text.trim();
+    if (result != true) return;
 
-      // Upload files
-      final uploadedUrls = await homeController.storage.uploadMultipleFiles(
-        userId: userId,
-        folder: folder.isEmpty ? 'uploads' : folder,
-      );
+    final folder = folderController.text.trim();
 
-      if (uploadedUrls.isNotEmpty) {
-        // Refresh ONLY the file list
-        homeController.refreshFiles(); // Also refresh controller
+    final uploadedUrls = await homeController.storage.uploadMultipleFiles(
+      userId: userId,
+      folder: folder.isEmpty ? 'uploads' : folder,
+    );
 
-        Get.showSnackbar(
-          GetSnackBar(
-            message: '${uploadedUrls.length} file(s) uploaded!',
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
+    if (uploadedUrls.isEmpty) return;
+
+    homeController.refreshFiles();
+
+    Get.showSnackbar(
+      GetSnackBar(
+        message: '${uploadedUrls.length} file(s) uploaded!',
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
