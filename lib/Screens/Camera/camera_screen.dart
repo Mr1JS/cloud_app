@@ -9,8 +9,8 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  CameraController? _controller; // Controller for the camera
-  Future<void>? _initializeControllerFuture; // to track camera initialization
+  CameraController? _controller;
+  Future<void>? _initializeControllerFuture;
 
   @override
   void initState() {
@@ -18,15 +18,31 @@ class _CameraScreenState extends State<CameraScreen> {
     _initCamera();
   }
 
-  // Initialize the camera
   Future<void> _initCamera() async {
     final cameras = await availableCameras();
-    final firstCamera = cameras.first;
 
-    _controller = CameraController(firstCamera, ResolutionPreset.medium);
+    final camera = cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
+    );
 
-    _initializeControllerFuture = _controller!.initialize();
-    setState(() {});
+    final controller = CameraController(
+      camera,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+
+    await controller.initialize();
+
+    if (!mounted) {
+      controller.dispose();
+      return;
+    }
+
+    setState(() {
+      _controller = controller;
+      _initializeControllerFuture = Future.value();
+    });
   }
 
   @override
@@ -35,21 +51,21 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
-  // Take picture and return bytes and name
   Future<void> _takePicture() async {
     try {
-      await _initializeControllerFuture;
+      if (!(_controller?.value.isInitialized ?? false)) return;
+
       final image = await _controller!.takePicture();
       final bytes = await image.readAsBytes();
 
-      if (mounted) {
-        Navigator.of(context).pop({
-          'bytes': bytes,
-          'name': 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
-        });
-      }
+      if (!mounted) return;
+
+      Navigator.of(context).pop({
+        'bytes': bytes,
+        'name': 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      });
     } catch (e) {
-      print(e);
+      debugPrint('Camera error: $e');
     }
   }
 
@@ -60,15 +76,23 @@ class _CameraScreenState extends State<CameraScreen> {
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Center(child: CameraPreview(_controller!));
-          } else {
-            return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.done &&
+              _controller != null) {
+            final controller = _controller!;
+            return Center(
+              child: AspectRatio(
+                aspectRatio: controller.value.aspectRatio,
+                child: CameraPreview(controller),
+              ),
+            );
           }
+          return const Center(child: CircularProgressIndicator());
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _takePicture,
+        onPressed: (_controller?.value.isInitialized ?? false)
+            ? _takePicture
+            : null,
         child: const Icon(Icons.camera_alt),
       ),
     );

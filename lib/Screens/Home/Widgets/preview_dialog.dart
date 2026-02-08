@@ -76,6 +76,8 @@ class SimplePreviewDialog extends StatelessWidget {
           return Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
+              primary: true,
+              scrollDirection: Axis.vertical,
               padding: const EdgeInsets.all(8),
               child: SelectableText(
                 snapshot.data ?? 'Empty file',
@@ -90,7 +92,7 @@ class SimplePreviewDialog extends StatelessWidget {
     // PDF preview - Using signed URL
     if (extension == 'pdf') {
       return FutureBuilder(
-        future: _GetPDFUrl(path),
+        future: _getPDFUrl(path),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -129,7 +131,7 @@ class SimplePreviewDialog extends StatelessWidget {
     }
   }
 
-  Future<String> _GetPDFUrl(String path) async {
+  Future<String> _getPDFUrl(String path) async {
     final response = Supabase.instance.client.storage
         .from('userdata')
         .getPublicUrl(path);

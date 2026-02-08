@@ -93,35 +93,14 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
 
   // Google Sign-In Handler
   Future<void> _handleGoogleSignIn() async {
-    setState(() => _isLoading = true);
-
     try {
       await _auth.signInWithGoogle();
-
-      await for (final authState in _auth.authChanges) {
-        if (authState.session != null) {
-          if (!mounted) return;
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => MyHomePage()),
-          );
-          break;
-        }
-      }
+      // nichts mehr hier machen!
     } catch (e) {
       if (!mounted) return;
-
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text("Google Sign In failed: ${e.toString()}"),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Google Sign In failed")));
     }
   }
 
