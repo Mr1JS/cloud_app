@@ -1,6 +1,8 @@
 import 'dart:typed_data'; // For Uint8List
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -99,6 +101,19 @@ class StorageService {
     required Uint8List bytes,
     required String filename,
   }) async {
+    // 50 MB limit
+    const maxBytes = 50 * 1024 * 1024;
+    if (bytes.lengthInBytes > maxBytes) {
+      Get.showSnackbar(
+        GetSnackBar(
+          message: '$filename is larger than 50 MB and was not uploaded.',
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return null;
+    }
+
     final path = '$userId/$folder/$filename';
 
     await supabase.storage
@@ -172,6 +187,19 @@ class StorageService {
     final file = await pickSingleImage();
     if (file?.bytes == null) return null;
 
+    // Check size limit
+    const maxBytes = 50 * 1024 * 1024;
+    if (file!.size > maxBytes) {
+      Get.showSnackbar(
+        GetSnackBar(
+          message: 'File is larger than 50 MB and was not uploaded.',
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return null;
+    }
+
     //            USER-ID / profile / profile_image (save here)
     final path = '$userId/$pathSuffix/profile_image';
 
@@ -179,7 +207,7 @@ class StorageService {
         .from(_bucket)
         .uploadBinary(
           path,
-          file!.bytes!,
+          file.bytes!,
           fileOptions: FileOptions(
             upsert: true,
             contentType: contentTypeFromFilename(file.name),
@@ -197,8 +225,22 @@ class StorageService {
     final files = await pickMultipleFiles();
     final urls = <String>[];
 
+    const maxBytes = 50 * 1024 * 1024;
+
     for (final file in files) {
       if (file.bytes == null) continue;
+
+      // enforce limit
+      if (file.size > maxBytes) {
+        Get.showSnackbar(
+          GetSnackBar(
+            message: 'File is larger than 50 MB and was skipped.',
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        continue;
+      }
 
       final path = '$userId/$folder/${file.name}';
 

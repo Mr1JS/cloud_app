@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_app/Screens/Home/home_page.dart';
 import 'package:cloud_app/Screens/Auth/login_page.dart';
 import 'package:cloud_app/Screens/Auth/signup_page.dart';
 import 'package:cloud_app/Services/auth_service.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 
 class Loginsignuppage extends StatefulWidget {
   const Loginsignuppage({super.key, required this.isLoginPage});
@@ -52,10 +53,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
       if (widget.isLoginPage) {
         await _auth.logIn(email.text.trim(), password.text.trim());
         if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MyHomePage()),
-        );
+        Get.offAllNamed("/");
       } else {
         await _auth.signUp(email.text.trim(), password.text.trim());
         if (!mounted) return;
@@ -69,10 +67,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
         );
 
         // Redirect to login page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LogInPage()),
-        );
+        Get.offAllNamed("/LoginPage");
       }
     } catch (e) {
       if (!mounted) return;
@@ -286,7 +281,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
                             ? null
                             : () {
                                 Navigator.pushReplacement(
-                                  context,
+                                  Get.context!,
                                   MaterialPageRoute(
                                     builder: (context) => isLogin
                                         ? const SignUpPage()

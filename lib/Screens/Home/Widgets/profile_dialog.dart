@@ -1,5 +1,7 @@
 import 'package:cloud_app/Screens/Home/Widgets/avatar_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 
 class ProfileDialog extends StatelessWidget {
   final String username;
@@ -47,7 +49,7 @@ class ProfileDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(Get.context!),
           child: const Text('OK'),
         ),
       ],

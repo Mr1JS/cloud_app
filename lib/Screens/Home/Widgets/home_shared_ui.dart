@@ -388,7 +388,7 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
                 icon: Icons.preview,
                 label: 'Preview',
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(Get.context!);
                   _homeController.showPreview(item);
                 },
               ),
@@ -396,7 +396,7 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
                 icon: Icons.download,
                 label: 'Download',
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(Get.context!);
                   _homeController.downloadFile(item.fullPath, item.name);
                 },
               ),
@@ -404,7 +404,7 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
                 icon: Icons.share,
                 label: 'Share',
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(Get.context!);
                   _homeController.shareLink(item.fullPath);
                 },
               ),
@@ -415,7 +415,7 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
               iconColor: Colors.red,
               labelColor: Colors.red,
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(Get.context!);
                 _homeController.confirmDelete(item);
               },
             ),

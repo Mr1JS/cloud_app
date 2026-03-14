@@ -30,7 +30,10 @@ class AuthService {
   Future<void> signInWithGoogle() async {
     if (kIsWeb) {
       // WEB: OAuth Flow
-      await _supabase.auth.signInWithOAuth(OAuthProvider.google);
+      await _supabase.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: '${Uri.base.origin}/',
+      );
     } else {
       // MOBILE: Native Google Sign In
       final GoogleSignIn googleSignIn = GoogleSignIn.instance;
@@ -63,7 +66,7 @@ class AuthService {
   }
 
   // Sign out
-  Future<void> signOut() => _supabase.auth.signOut();
+  Future<void> signOut() => _supabase.auth.signOut(scope: SignOutScope.global);
 
   // Get current session
   Session? get session => _supabase.auth.currentSession;

@@ -1,5 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -60,7 +62,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
       if (!mounted) return;
 
-      Navigator.of(context).pop({
+      Navigator.of(Get.context!).pop({
         'bytes': bytes,
         'name': 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
       });

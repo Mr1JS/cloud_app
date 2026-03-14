@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// -----------------------------
-/// Searchbar Controller
-/// -----------------------------
+// Searchbar Controller
 class Searchbar {
   final SearchController searchController = SearchController();
   final VoidCallback onUpdate;

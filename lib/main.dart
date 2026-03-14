@@ -31,11 +31,19 @@ class MyApp extends StatelessWidget {
       theme: UiTheme.lightTheme,
       darkTheme: UiTheme.darkTheme,
       themeMode: ThemeMode.system, // System says dark or light mode
+      // All available app routes
+      // / --> Homepage
+      // /LoginPage --> Login/Signup page
+      getPages: [
+        GetPage(name: '/', page: () => MyHomePage()),
+        GetPage(name: '/LoginPage', page: () => LogInPage()),
+      ],
+
       // Listen to auth state changes and show --> login page or the home page
       home: StreamBuilder<AuthState>(
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, snapshot) {
-          final session = snapshot.data?.session;
+          final session = Supabase.instance.client.auth.currentSession;
 
           // Session is null --> means user is not logged in --> show login page
           if (session == null) {

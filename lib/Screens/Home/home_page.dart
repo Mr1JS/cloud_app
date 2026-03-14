@@ -85,7 +85,7 @@ class MyHomePage extends StatelessWidget {
     if (isCamera) {
       String? url;
 
-      // NEU: Camera Screen für Web + Mobile
+      // Camera Screen für Web + Mobile
       final result = await Navigator.of(Get.context!)
           .push<Map<String, dynamic>>(
             MaterialPageRoute(builder: (_) => const CameraScreen()),
