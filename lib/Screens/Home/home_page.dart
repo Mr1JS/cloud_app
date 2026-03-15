@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:cloud_app/Screens/Camera/camera_screen.dart';
+import 'package:cloud_app/Screens/Home/Widgets/drag_and_drop_widget.dart';
 import 'package:cloud_app/Screens/Home/mobile_body.dart';
 import 'package:cloud_app/Screens/Home/web_body.dart';
 import 'package:cloud_app/Screens/Home/Controller/home_controller.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,113 +23,223 @@ class MyHomePage extends StatelessWidget {
     final userId = homeController.auth.currentUser?.id;
     if (userId == null) return;
 
-    final isCamera =
-        await Get.dialog<bool>(
-          AlertDialog(
-            title: const Text('Upload'),
-            content: Column(
+    final folderController = TextEditingController();
+    final scrollController = ScrollController();
+    final pending = <({String name, Uint8List bytes})>[].obs;
+
+    await Get.dialog(
+      Obx(
+        () => AlertDialog(
+          title: const Text('Upload Files'),
+          content: SizedBox(
+            width: 420,
+            child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ListTile(
-                  leading: const Icon(Icons.camera_alt),
-                  title: const Text('Camera'),
-                  onTap: () => Get.back(result: true),
+                // Destination
+                const Text(
+                  'Destination',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.upload_file),
-                  title: const Text('Files'),
-                  onTap: () => Get.back(result: false),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text(
+                      '${homeController.currentUsername} / ',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: folderController,
+                        decoration: const InputDecoration(
+                          hintText: 'folder (default: uploads)',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+
+                const SizedBox(height: 16),
+
+                // Add Files
+                const Text(
+                  'Add Files',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    // Web: drag & drop picker
+                    if (kIsWeb)
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.upload_file, size: 16),
+                        label: const Text('Select Files'),
+                        onPressed: () {
+                          Get.dialog(
+                            AlertDialog(
+                              title: const Text('Drop or Select Files'),
+                              content: DragAndDropWidget(
+                                multiple: true,
+                                onFilesConfirmed: (files) {
+                                  for (final f in files) {
+                                    pending.add((
+                                      name: f.filename,
+                                      bytes: Uint8List.fromList(f.bytes),
+                                    ));
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                    // Mobile: native picker
+                    if (!kIsWeb)
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.upload_file, size: 16),
+                        label: const Text('Select Files'),
+                        onPressed: () async {
+                          final files = await homeController.storage
+                              .pickMultipleFiles();
+                          for (final f in files) {
+                            if (f.bytes != null) {
+                              pending.add((name: f.name, bytes: f.bytes!));
+                            }
+                          }
+                        },
+                      ),
+
+                    const SizedBox(width: 8),
+
+                    // Camera (web + mobile)
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.camera_alt, size: 16),
+                      label: const Text('Take a photo'),
+                      onPressed: () async {
+                        final result = await Navigator.of(Get.context!)
+                            .push<Map<String, dynamic>>(
+                              MaterialPageRoute(
+                                builder: (_) => const CameraScreen(),
+                              ),
+                            );
+                        if (result != null) {
+                          pending.add((
+                            name: result['name'] as String,
+                            bytes: result['bytes'] as Uint8List,
+                          ));
+                        }
+                      },
+                    ),
+                  ],
+                ),
+
+                // File list
+                if (pending.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Files to upload',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 6),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 160),
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      controller: scrollController,
+                      child: ListView.builder(
+                        controller: scrollController,
+                        shrinkWrap: true,
+                        itemCount: pending.length,
+                        itemBuilder: (_, i) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.insert_drive_file_outlined,
+                                size: 16,
+                                color: Colors.blue,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  pending[i].name,
+                                  style: const TextStyle(fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 16),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => pending.removeAt(i),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-        ) ??
-        false;
 
-    final folderController = TextEditingController();
-    final upload = await Get.dialog<bool>(
-      AlertDialog(
-        title: Text(isCamera ? 'Upload Photo' : 'Upload Files'),
-        content: Row(
-          children: [
-            Text(
-              "${homeController.currentUsername} / ",
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          // Actions
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: folderController,
-                decoration: const InputDecoration(
-                  hintText: 'Folder name (optional)',
-                  border: OutlineInputBorder(),
-                ),
+            ElevatedButton(
+              onPressed: pending.isEmpty
+                  ? null
+                  : () async {
+                      Get.back();
+                      final folder = folderController.text.trim();
+                      final path = folder.isEmpty ? 'uploads' : folder;
+                      int count = 0;
+                      for (final f in pending) {
+                        final resolvedName = await homeController.storage
+                            .resolveUniqueFilename(
+                              userId: userId,
+                              folder: path,
+                              filename: f.name,
+                            );
+
+                        final url = await homeController.storage
+                            .uploadImageFromCamera(
+                              userId: userId,
+                              folder: path,
+                              bytes: f.bytes,
+                              filename: resolvedName,
+                            );
+                        if (url != null) count++;
+                      }
+                      if (count > 0) {
+                        homeController.refreshFiles();
+                        Get.showSnackbar(
+                          GetSnackBar(
+                            message: '$count file(s) uploaded!',
+                            backgroundColor: Colors.green,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+              child: Text(
+                pending.isEmpty
+                    ? 'Upload'
+                    : 'Upload ${pending.length} file${pending.length > 1 ? 's' : ''}',
               ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Get.back(result: true),
-            child: Text(isCamera ? 'Take Photo' : 'Upload'),
-          ),
-        ],
       ),
     );
-
-    if (upload != true) return;
-
-    final folder = folderController.text.trim();
-    final path = folder.isEmpty ? 'uploads' : folder;
-
-    if (isCamera) {
-      String? url;
-
-      // Camera Screen für Web + Mobile
-      final result = await Navigator.of(Get.context!)
-          .push<Map<String, dynamic>>(
-            MaterialPageRoute(builder: (_) => const CameraScreen()),
-          );
-
-      if (result != null) {
-        url = await homeController.storage.uploadImageFromCamera(
-          userId: userId,
-          folder: path,
-          bytes: result['bytes'],
-          filename: result['name'],
-        );
-      }
-
-      if (url != null) {
-        homeController.refreshFiles();
-        Get.showSnackbar(
-          const GetSnackBar(
-            message: 'Photo uploaded!',
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } else {
-      final urls = await homeController.storage.uploadMultipleFiles(
-        userId: userId,
-        folder: path,
-      );
-      if (urls.isNotEmpty) {
-        homeController.refreshFiles();
-        Get.showSnackbar(
-          GetSnackBar(
-            message: '${urls.length} file(s) uploaded!',
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
   }
 
   @override

@@ -297,4 +297,29 @@ class StorageService {
   }
 
   //
+
+  // Make sure we do not overwrite existing files --> genarate unique filename if needed
+  Future<String> resolveUniqueFilename({
+    required String userId,
+    required String folder,
+    required String filename,
+  }) async {
+    final parts = filename.split('.');
+    final ext = parts.length > 1 ? '.${parts.last}' : '';
+    final base = parts.length > 1
+        ? parts.sublist(0, parts.length - 1).join('.')
+        : filename;
+
+    String candidate = filename;
+    int counter = 1;
+
+    while (true) {
+      final dir = '$userId/$folder';
+      final objects = await supabase.storage.from(_bucket).list(path: dir);
+      final exists = objects.any((o) => o.name == candidate);
+      if (!exists) return candidate;
+      candidate = '${base}_$counter$ext';
+      counter++;
+    }
+  }
 }

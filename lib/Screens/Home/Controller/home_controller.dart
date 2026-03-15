@@ -1,12 +1,13 @@
 import 'package:cloud_app/Screens/Camera/camera_screen.dart';
+import 'package:cloud_app/Screens/Home/Widgets/drag_and_drop_widget.dart';
 import 'package:cloud_app/Screens/Home/Widgets/file_item.dart';
 import 'package:cloud_app/Screens/Home/Widgets/file_system_manager.dart';
 import 'package:cloud_app/Screens/Home/Widgets/profile_dialog.dart';
 import 'package:cloud_app/Screens/Home/Widgets/preview_dialog.dart';
 import 'package:cloud_app/Services/storage_service.dart';
-import 'package:cloud_app/Screens/Auth/login_page.dart';
 import 'package:cloud_app/Services/auth_service.dart';
 import 'package:download/download.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:primer_progress_bar/primer_progress_bar.dart';
@@ -90,75 +91,90 @@ class HomeController extends GetxController {
   // DIALOGS
   // for profile editing
   void showProfileDialog() {
-    String? dialogImageUrl = _imageUrl.value;
+    Get.dialog(
+      Obx(
+        () => ProfileDialog(
+          username: _username.value,
+          email: _auth.userEmail ?? '',
+          imageUrl: _imageUrl.value.isEmpty ? null : _imageUrl.value,
+          onEditImage: () => _showImagePickerSheet(),
+        ),
+      ),
+    );
+  }
+
+  void _showImagePickerSheet() {
+    final userId = _auth.currentUser?.id;
+    if (userId == null) return;
 
     Get.dialog(
-      StatefulBuilder(
-        builder: (context, setDialogState) {
-          return ProfileDialog(
-            username: _username.value,
-            email: _auth.userEmail ?? '',
-            imageUrl: dialogImageUrl,
-            onEditImage: () async {
-              final userId = _auth.currentUser?.id;
-              if (userId == null) return;
-
-              // choose camera or gallery
-              final useCamera = await Get.dialog<bool>(
-                AlertDialog(
-                  title: const Text('Choose Source'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.camera_alt),
-                        title: const Text('Camera'),
-                        onTap: () => Get.back(result: true),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.photo_library),
-                        title: const Text('Gallery'),
-                        onTap: () => Get.back(result: false),
-                      ),
-                    ],
+      AlertDialog(
+        title: const Text('Upload Image'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (kIsWeb)
+              DragAndDropWidget(
+                onFileConfirmed: (bytes, filename) async {
+                  final url = await _storage.uploadImageFromCamera(
+                    userId: userId,
+                    folder: 'profile',
+                    bytes: Uint8List.fromList(bytes),
+                    filename: 'profile_image',
+                  );
+                  if (url != null) {
+                    _imageUrl.value = url;
+                  }
+                },
+              ),
+            Row(
+              children: [
+                Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8.0,
+                    vertical: 10,
                   ),
+                  child: Text('or', style: TextStyle(fontSize: 16)),
                 ),
-              );
-
-              if (useCamera == null) return;
-
-              String? url;
-
-              if (useCamera) {
-                // Camera
+                Expanded(child: Divider()),
+              ],
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () async {
+                Get.back();
                 final result = await Navigator.of(Get.context!)
                     .push<Map<String, dynamic>>(
                       MaterialPageRoute(builder: (_) => const CameraScreen()),
                     );
-
                 if (result != null) {
-                  url = await _storage.uploadImageFromCamera(
+                  final url = await _storage.uploadImageFromCamera(
                     userId: userId,
                     folder: 'profile',
                     bytes: result['bytes'],
                     filename: 'profile_image',
                   );
+                  if (url != null) _imageUrl.value = url;
                 }
-              } else {
-                // Gallery
-                url = await _storage.uploadProfileImage(
-                  userId: userId,
-                  pathSuffix: 'profile',
-                );
-              }
-
-              if (url != null) {
-                setDialogState(() => dialogImageUrl = url);
-                _imageUrl.value = url;
-              }
-            },
-          );
-        },
+              },
+            ),
+            if (!kIsWeb)
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Gallery'),
+                onTap: () async {
+                  Get.back();
+                  final url = await _storage.uploadProfileImage(
+                    userId: userId,
+                    pathSuffix: 'profile',
+                  );
+                  if (url != null) _imageUrl.value = url;
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -283,7 +299,6 @@ class HomeController extends GetxController {
   // Sign out
   void signOut() async {
     await _auth.signOut();
-    Get.offAll(() => LogInPage());
     Get.deleteAll(force: true);
   }
 

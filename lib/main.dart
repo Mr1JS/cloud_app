@@ -32,11 +32,11 @@ class MyApp extends StatelessWidget {
       darkTheme: UiTheme.darkTheme,
       themeMode: ThemeMode.system, // System says dark or light mode
       // All available app routes
-      // / --> Homepage
-      // /LoginPage --> Login/Signup page
+      // /home --> Homepage
+      // /login --> Login/Signup page
       getPages: [
-        GetPage(name: '/', page: () => MyHomePage()),
-        GetPage(name: '/LoginPage', page: () => LogInPage()),
+        GetPage(name: '/home', page: () => MyHomePage()),
+        GetPage(name: '/login', page: () => LogInPage()),
       ],
 
       // Listen to auth state changes and show --> login page or the home page

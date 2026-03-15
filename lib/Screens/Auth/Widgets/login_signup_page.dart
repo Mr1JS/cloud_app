@@ -53,7 +53,6 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
       if (widget.isLoginPage) {
         await _auth.logIn(email.text.trim(), password.text.trim());
         if (!mounted) return;
-        Get.offAllNamed("/");
       } else {
         await _auth.signUp(email.text.trim(), password.text.trim());
         if (!mounted) return;
@@ -67,7 +66,6 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
         );
 
         // Redirect to login page
-        Get.offAllNamed("/LoginPage");
       }
     } catch (e) {
       if (!mounted) return;
@@ -90,7 +88,6 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
   Future<void> _handleGoogleSignIn() async {
     try {
       await _auth.signInWithGoogle();
-      // nichts mehr hier machen!
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
