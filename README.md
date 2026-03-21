@@ -8,45 +8,53 @@ A simple cloud storage app built with Flutter and Supabase. Upload files, take p
 ## Features
 
 - Sign up and login with email/password or Google account
-- Upload multiple files at once
+- Upload multiple files at once (mobile: native picker, web: drag & drop)
 - Take photos with your camera and upload them directly
-- Preview images and PDFs in the app
+- Preview images, PDFs, and text/code files in the app
 - Download and share files
-- Organize files in folders
-- Search through your files
-- Profile picture customization
-- Storage overview showing what types of files you have
-- Works on mobile, web, and desktop
-- Dark mode support
+- Organize files in custom folders
+- Search through your files and folders
+- Profile picture customization (camera, gallery, or drag & drop on web)
+- Storage overview showing file type breakdown (images, docs, videos, other)
+- Recent uploads sidebar showing your last 3 files
+- Unique filename resolution (no accidental overwrites)
+- Adaptive layout for mobile and web
+- Dark mode support (follows system theme)
+- 50 MB per-file upload limit with user feedback
 
 ## What I Used
 
 **Main stuff:**
 - Flutter for the UI
 - Supabase for backend (auth and storage)
-- GetX for state management
+- GetX for state management and navigation
 
-**Important packages:**
-- `supabase_flutter` - connects to Supabase
-- `google_sign_in` - Google login
-- `camera` - camera access for taking photos
-- `file_picker` - selecting files from device
-- `syncfusion_flutter_pdfviewer` - viewing PDFs
-- `share_plus` - sharing files
-- `download` - downloading files
-- `get` - state management
-- `primer_progress_bar` - storage visualization
-- `http` - file operations
-- `flutter_dotenv` - managing environment variables
+**Packages:**
+- `supabase_flutter` — Supabase client (auth + storage)
+- `google_sign_in` — native Google login on Android/iOS
+- `flutter_dotenv` — loading environment variables from `.env`
+- `camera` — in-app camera for taking photos
+- `file_picker` — selecting files from device (mobile)
+- `flutter_dropzone` — drag & drop file uploads (web only)
+- `dotted_border` — styled drop zone border
+- `syncfusion_flutter_pdfviewer` — PDF preview
+- `share_plus` — sharing file public links
+- `download` — downloading files on web (blob download)
+- `file_saver` — native save-as dialog for downloading files on mobile
+- `path_provider` — resolving temp directory on mobile
+- `open_file` — opening downloaded files with the system app
+- `get` — GetX state management
+- `primer_progress_bar` — storage type visualization bar
+- `http` — checking if profile image URL exists
 
 ## Setup
 
-### What you need:
+### Requirements
 - Flutter 3.10 or newer
-- A Supabase account (free)
+- A Supabase account (free tier works)
 - Google Cloud project (for Google login)
 
-### 1. Install
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/Mr1JS/cloud_app
@@ -54,116 +62,154 @@ cd cloud_app
 flutter pub get
 ```
 
-### 2. Supabase Setup
+### 2. Environment Variables
 
-Create a `.env` file:
+Create `assets/.env`:
 ```env
 url=YOUR_SUPABASE_PROJECT_URL
 anonKey=YOUR_SUPABASE_ANON_KEY
+webClientId=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+iosClientId=YOUR_IOS_CLIENT_ID.apps.googleusercontent.com
+androidClientId=YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com
 ```
+
+Make sure `assets/.env` is listed in `pubspec.yaml` under `flutter > assets`.
+
+### 3. Supabase Setup
 
 In your Supabase project:
 - Create a storage bucket called `userdata` (make it public)
-- Enable Email and Google auth providers
+- Enable **Email** and **Google** auth providers
+- Configure RLS policies on the `userdata` bucket so users can only access their own files (path prefix: `userId/`)
 
-### 3. Google Sign In
+### 4. Google Sign-In
 
-Get credentials from Google Cloud Console and update `lib/Services/auth_service.dart`:
-```dart
-static const String webClientId = 'YOUR-WEB-CLIENT-ID.apps.googleusercontent.com';
-static const String iosClientId = 'YOUR-IOS-CLIENT-ID.apps.googleusercontent.com';
-```
+**Web:** Add your app's origin and redirect URL to the OAuth credentials in Google Cloud Console and to Supabase's redirect URL allowlist.
 
-For iOS, add to `ios/Runner/Info.plist`:
+**iOS** — add to `ios/Runner/Info.plist`:
 ```xml
 <key>NSCameraUsageDescription</key>
 <string>Cloud App needs camera access to take and upload photos.</string>
 <key>NSPhotoLibraryUsageDescription</key>
 <string>Cloud App needs photo library access to select photos.</string>
 <key>NSMicrophoneUsageDescription</key>
-<string>Explanation on why the microphone access is needed.</string>
+<string>Cloud App requests microphone access as required by the camera plugin.</string>
+<!-- Google Sign-in Section -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>{YOUR_GOOGLE_CLOUD_IOS_CLIENT_ID}</string>
+			</array>
+		</dict>
+	</array>
+<!-- End of the Google Sign-in Section -->
+<key>LSSupportsOpeningDocumentsInPlace</key>
+<true/>
+<key>UIFileSharingEnabled</key>
+<true/>
 ```
 
-For Android, set `minSdk` to 21 in `android/app/build.gradle`.
-
-### 4. Run
+### 5. Run
 
 ```bash
-flutter run -d chrome --web-hostname localhost # web
-flutter run -d ios     # iOS
-flutter run -d android # Android
+flutter run -d chrome --web-hostname localhost  # web
+flutter run -d ios                              # iOS
+flutter run -d android                          # Android
 ```
 
 ## Project Structure
 
 ```
 lib/
-├── main.dart                    # Entry point
+├── main.dart                        # Entry point, auth stream, routing
 ├── Screens/
-│   ├── Auth/                    # Login and signup screens
-│   ├── Camera/                  # Camera screen
-│   └── Home/                    # Main app screens
-│       ├── Controller/          # Business logic
-│       └── Widgets/             # Reusable components
+│   ├── Auth/
+│   │   └── Widgets/
+│   │   │   └── login_signup_page.dart   # Shared login/signup form widget
+│   │   ├── login_page.dart          # Login screen
+│   │   └── signup_page.dart         # Signup screen
+│   ├── Camera/
+│   │   └── camera_screen.dart       # In-app camera (mobile + web)
+│   └── Home/
+│       ├── home_page.dart           # Root home screen + upload dialog
+│       ├── mobile_body.dart         # Mobile layout wrapper
+│       ├── web_body.dart            # Web layout wrapper
+│       ├── Controller/
+│       │   └── home_controller.dart # GetX controller (files, auth, dialogs)
+│       └── Widgets/
+│           ├── avatar_widget.dart   # Profile avatar with edit button
+│           ├── drag_and_drop_widget.dart # Web drag & drop (flutter_dropzone)
+│           ├── file_item.dart       # FileItem model with type helpers
+│           ├── file_system_manager.dart  # Tree builder + search expansion
+│           ├── home_shared_ui.dart  # Shared UI (drawer, file list, search)
+│           ├── preview_dialog.dart  # Image / PDF / text file preview
+│           ├── profile_dialog.dart  # User profile popup
+│           ├── search_bar.dart      # Search controller wrapper
+│           └── storage_bar_delegate.dart # Sliver header delegate
 ├── Services/
-│   ├── auth_service.dart        # Authentication
-│   └── storage_service.dart     # File storage
+│   ├── auth_service.dart            # Email + Google auth via Supabase
+│   └── storage_service.dart         # Upload, download, list, URL helpers
 └── Themes/
-    └── ui_theme.dart            # Light/dark themes
+    └── ui_theme.dart                # Material 3 light/dark themes
 ```
 
 ## How It Works
 
-When you open the app, it checks if you're logged in. If not, you see the login page. After logging in (email or Google), you get to the home screen where you can upload files.
+On launch, `main.dart` listens to Supabase's auth state stream. If no session exists the user sees the login page; once authenticated they land on the home screen.
 
-Files are stored in Supabase under `userId/folder/filename`, so each user only sees their own files. You can take photos directly in the app or upload existing files. The camera works on both mobile and web.
+Files are stored in Supabase under `userId/folder/filename`, so each user only sees their own files. The `FileSystemManager` builds a virtual folder tree from the flat list returned by Supabase and handles search-triggered folder expansion automatically.
 
-The app has separate layouts for mobile and web to make the best use of screen space. Everything syncs with Supabase in real-time, so if you log in from another device, your files are there.
+The upload dialog lets you queue multiple files before uploading — you can mix files picked from the device, drag & dropped on web, and photos taken with the camera. Before uploading, `resolveUniqueFilename` checks for name collisions and appends a counter if needed.
 
+The sidebar shows a storage type breakdown (via `primer_progress_bar`) and your three most recent uploads. The layout switches between a drawer-based mobile view and a persistent side-panel web view at 700 px width.
 
 ## Security
 
-- **Row Level Security (RLS):** Configure in Supabase to restrict file access per user
-- **API Keys:** Never commit `.env` file (add to `.gitignore`)
-- **Google OAuth:** Client secrets stored securely in Google Cloud
-- **File paths:** User ID prefix prevents unauthorized access
-
+- **Row Level Security (RLS):** Configure in Supabase so each user can only read/write under their own `userId/` prefix
+- **Environment variables:** Never commit `assets/.env` — add it to `.gitignore`
+- **Google OAuth:** Client secrets stay in Google Cloud; only client IDs are in the app
+- **File paths:** The `userId` prefix in every storage path prevents cross-user access
 
 ## Troubleshooting
-
-### Common Issues
-
-**Google Sign In not working on Web:**
-- Check if redirect URLs are configured in Supabase Dashboard
-- Verify Web Client ID is correct in `auth_service.dart`
-- Ensure browser allows popups
-
+ 
+**Google Sign-In not working on Web:**
+- Check that your redirect URL is added in both Supabase Dashboard and Google Cloud Console
+- Verify `webClientId` in `assets/.env` is correct
+- Ensure the browser allows popups from localhost
+ 
 **Camera not working:**
-- **iOS:** Check `Info.plist` has camera permissions
-- **Android:** Verify `minSdkVersion` is 21+
-- **Web:** Must use HTTPS or localhost
-
+- iOS: confirm `Info.plist` has all three permission keys above
+- Android: confirm `minSdkVersion` is 21+
+- Web: must run on `https://` or `localhost`
+ 
 **Files not uploading:**
-- Check Supabase Storage bucket exists and is named `userdata`
-- Verify bucket is public or RLS policies allow upload
-- Check network connection
-
-**Build errors:**
-- Run `flutter clean && flutter pub get`
-- Check Flutter version: `flutter --version` (requires 3.10+)
-- Update dependencies: `flutter pub upgrade`
-
-
+- Confirm the Supabase bucket is named exactly `userdata`
+- Check that the bucket is public or that RLS policies allow uploads
+- Files over 50 MB are silently skipped with a snackbar — check file size
+ 
+**Download not working on mobile:**
+- iOS: confirm `Info.plist` has `LSSupportsOpeningDocumentsInPlace` and `UIFileSharingEnabled` set to `true`
+- The native save-as dialog (via `file_saver`) opens automatically — no extra permissions needed
+- On web, files download directly to the browser's default download location
+ 
+ 
+```bash
+flutter clean && flutter pub get
+flutter --version   # requires 3.10+
+```
+ 
 ## License
-
-This project is created for educational purposes as part of the "Konzepte der Android-Programmierung" course.
-
-
+ 
+Created for educational purposes as part of the "Konzepte der Android-Programmierung" course.
+ 
 ## Acknowledgments
-
-- [Flutter](https://flutter.dev/) - UI framework
-- [Supabase](https://supabase.com/) - Backend infrastructure
-- [GetX](https://pub.dev/packages/get) - State management
-- [Syncfusion](https://www.syncfusion.com/flutter-widgets) - PDF Viewer
-
----
+ 
+- [Flutter](https://flutter.dev/) — UI framework
+- [Supabase](https://supabase.com/) — Backend & storage
+- [GetX](https://pub.dev/packages/get) — State management
+- [Syncfusion](https://www.syncfusion.com/flutter-widgets) — PDF Viewer
+- [flutter_dropzone](https://pub.dev/packages/flutter_dropzone) — Web drag & drop

@@ -7,6 +7,7 @@ import 'package:cloud_app/Screens/Home/Widgets/preview_dialog.dart';
 import 'package:cloud_app/Services/storage_service.dart';
 import 'package:cloud_app/Services/auth_service.dart';
 import 'package:download/download.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -110,70 +111,73 @@ class HomeController extends GetxController {
     Get.dialog(
       AlertDialog(
         title: const Text('Upload Image'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (kIsWeb)
-              DragAndDropWidget(
-                onFileConfirmed: (bytes, filename) async {
-                  final url = await _storage.uploadImageFromCamera(
-                    userId: userId,
-                    folder: 'profile',
-                    bytes: Uint8List.fromList(bytes),
-                    filename: 'profile_image',
-                  );
-                  if (url != null) {
-                    _imageUrl.value = url;
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (kIsWeb)
+                DragAndDropWidget(
+                  onFileConfirmed: (bytes, filename) async {
+                    final url = await _storage.uploadImageFromCamera(
+                      userId: userId,
+                      folder: 'profile',
+                      bytes: Uint8List.fromList(bytes),
+                      filename: 'profile_image',
+                    );
+                    if (url != null) {
+                      _imageUrl.value = url;
+                    }
+                  },
+                ),
+              if (kIsWeb)
+                Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0,
+                        vertical: 10,
+                      ),
+                      child: Text('or', style: TextStyle(fontSize: 16)),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Camera'),
+                onTap: () async {
+                  Get.back();
+                  final result = await Navigator.of(Get.context!)
+                      .push<Map<String, dynamic>>(
+                        MaterialPageRoute(builder: (_) => const CameraScreen()),
+                      );
+                  if (result != null) {
+                    final url = await _storage.uploadImageFromCamera(
+                      userId: userId,
+                      folder: 'profile',
+                      bytes: result['bytes'],
+                      filename: 'profile_image',
+                    );
+                    if (url != null) _imageUrl.value = url;
                   }
                 },
               ),
-            Row(
-              children: [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0,
-                    vertical: 10,
-                  ),
-                  child: Text('or', style: TextStyle(fontSize: 16)),
-                ),
-                Expanded(child: Divider()),
-              ],
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
-              onTap: () async {
-                Get.back();
-                final result = await Navigator.of(Get.context!)
-                    .push<Map<String, dynamic>>(
-                      MaterialPageRoute(builder: (_) => const CameraScreen()),
+              if (!kIsWeb)
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Gallery'),
+                  onTap: () async {
+                    Get.back();
+                    final url = await _storage.uploadProfileImage(
+                      userId: userId,
+                      pathSuffix: 'profile',
                     );
-                if (result != null) {
-                  final url = await _storage.uploadImageFromCamera(
-                    userId: userId,
-                    folder: 'profile',
-                    bytes: result['bytes'],
-                    filename: 'profile_image',
-                  );
-                  if (url != null) _imageUrl.value = url;
-                }
-              },
-            ),
-            if (!kIsWeb)
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
-                onTap: () async {
-                  Get.back();
-                  final url = await _storage.uploadProfileImage(
-                    userId: userId,
-                    pathSuffix: 'profile',
-                  );
-                  if (url != null) _imageUrl.value = url;
-                },
-              ),
-          ],
+                    if (url != null) _imageUrl.value = url;
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -275,7 +279,21 @@ class HomeController extends GetxController {
     final fullPath = "$userId/$path";
     final fileData = await _storage.downloadFile(fullPath);
 
-    await downloadData(fileData, filename);
+    if (kIsWeb) {
+      // web - trigger browser download
+      await downloadData(fileData, filename);
+    } else {
+      // Mobile: save to app's temp dir and open it
+      final ext = filename.split('.').last.toLowerCase();
+
+      await FileSaver.instance.saveAs(
+        name: filename.replaceAll('.$ext', ''),
+        bytes: fileData,
+        fileExtension: ext,
+        mimeType: MimeType.custom,
+        customMimeType: _storage.contentTypeFromFilename(filename),
+      );
+    }
   }
 
   // UTILITIES

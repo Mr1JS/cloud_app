@@ -69,11 +69,11 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
       }
     } catch (e) {
       if (!mounted) return;
+      final message = e.toString().contains('message: ')
+          ? e.toString().split('message: ')[1].split(',')[0]
+          : 'Something went wrong';
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text("Error: ${e.toString()}"),
-          duration: const Duration(seconds: 3),
-        ),
+        SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
       );
     } finally {
       if (mounted) {
@@ -118,10 +118,10 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Logo
-                Icon(
-                  Icons.cloud,
-                  size: isSmallScreen ? 56 : 64,
-                  color: Colors.blue[700],
+                Image.asset(
+                  'assets/splash_screen/cloud_icon.png',
+                  width: isSmallScreen ? 56 : 64,
+                  height: isSmallScreen ? 56 : 64,
                 ),
 
                 SizedBox(height: isSmallScreen ? 16 : 24),
@@ -343,7 +343,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.asset(
-                            'google_image/google.png',
+                            'assets/google_image/google.png',
                             width: 30,
                             height: 30,
                           ),

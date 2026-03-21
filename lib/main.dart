@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 Future<void> main() async {
   // Ensure Flutter bindings are initialized before loading .env
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+  await dotenv.load(fileName: 'assets/.env');
 
   // Initialize Supabase with --> URL and anon key
   await Supabase.initialize(

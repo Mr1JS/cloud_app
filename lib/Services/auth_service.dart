@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -12,6 +13,7 @@ class AuthService {
   // Google Sign In Client IDs (IOS and Web)
   static final String webClientId = dotenv.get('webClientId');
   static final String iosClientId = dotenv.get('iosClientId');
+  static final String androidClientId = dotenv.get('androidClientId');
 
   // get Supabase client
   SupabaseClient get supabaseClient => _supabase;
@@ -41,17 +43,24 @@ class AuthService {
       // Initialize Google Sign In
       unawaited(
         googleSignIn.initialize(
-          clientId: iosClientId,
           serverClientId: webClientId,
+          clientId: Platform.isAndroid ? androidClientId : iosClientId,
         ),
       );
 
       final googleAccount = await googleSignIn.authenticate();
-      final googleAuthorization = await googleAccount.authorizationClient
-          .authorizationForScopes([]);
+      final googleAuthorization =
+          await googleAccount.authorizationClient.authorizationForScopes([
+            'email',
+            'profile',
+          ]) ??
+          await googleAccount.authorizationClient.authorizeScopes([
+            'email',
+            'profile',
+          ]);
       final googleAuthentication = googleAccount.authentication;
       final idToken = googleAuthentication.idToken;
-      final accessToken = googleAuthorization?.accessToken;
+      final accessToken = googleAuthorization.accessToken;
 
       if (idToken == null) {
         throw 'No ID Token found.';

@@ -50,11 +50,24 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
     return AppBar(
       flexibleSpace: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 60.0, vertical: 5),
-        child: _buildSearchBar(
-          leading: const Icon(Icons.cloud, color: Colors.blue),
+        child: Padding(
+          padding: const EdgeInsets.only(right: 25.0),
+          child: _buildSearchBar(
+            leading: Image.asset(
+              'assets/splash_screen/cloud_icon.png',
+              width: 25,
+              height: 25,
+            ),
+          ),
         ),
       ),
-      actions: [_buildLogoutButton()],
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _homeController.refreshFiles,
+        ),
+        _buildLogoutButton(),
+      ],
       elevation: 1,
     );
   }
@@ -77,16 +90,23 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
   Widget _buildWebAppBar() {
     return SliverAppBar(
       pinned: true,
-      leading: const Icon(Icons.cloud, color: Colors.blue),
+      leading: Image.asset(
+        'assets/splash_screen/cloud_icon.png',
+        width: 25,
+        height: 25,
+      ),
       flexibleSpace: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 60.0, vertical: 5),
         child: Row(
           children: [
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.35,
+              width: MediaQuery.of(context).size.width * 0.29,
               child: _buildSearchBar(leading: const Icon(Icons.search)),
             ),
-            const SizedBox(),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _homeController.refreshFiles,
+            ),
           ],
         ),
       ),
@@ -123,12 +143,14 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
 
   Widget _buildDrawer() {
     return Drawer(
-      child: Column(
-        children: [
-          _buildDrawerHeader(),
-          _buildStorageOverview(),
-          _buildRecentUploads(),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildDrawerHeader(),
+            _buildStorageOverview(),
+            _buildRecentUploads(),
+          ],
+        ),
       ),
     );
   }
@@ -276,23 +298,25 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.folder_open, size: 80),
-          const SizedBox(height: 16),
-          Text(
-            _searchBar.query.isEmpty
-                ? 'No files uploaded yet'
-                : 'No results found',
-            style: const TextStyle(fontSize: 18),
-          ),
-          if (_searchBar.query.isNotEmpty)
-            TextButton(
-              onPressed: _searchBar.clear,
-              child: const Text('Clear search'),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.folder_open, size: 80),
+            const SizedBox(height: 16),
+            Text(
+              _searchBar.query.isEmpty
+                  ? 'No files uploaded yet'
+                  : 'No results found',
+              style: const TextStyle(fontSize: 18),
             ),
-        ],
+            if (_searchBar.query.isNotEmpty)
+              TextButton(
+                onPressed: _searchBar.clear,
+                child: const Text('Clear search'),
+              ),
+          ],
+        ),
       ),
     );
   }

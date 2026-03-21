@@ -12,39 +12,14 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? _controller;
-  Future<void>? _initializeControllerFuture;
+  List<CameraDescription> _cameras = [];
+  int _cameraIndex = 0;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
     _initCamera();
-  }
-
-  Future<void> _initCamera() async {
-    final cameras = await availableCameras();
-
-    final camera = cameras.firstWhere(
-      (c) => c.lensDirection == CameraLensDirection.back,
-      orElse: () => cameras.first,
-    );
-
-    final controller = CameraController(
-      camera,
-      ResolutionPreset.medium,
-      enableAudio: false,
-    );
-
-    await controller.initialize();
-
-    if (!mounted) {
-      controller.dispose();
-      return;
-    }
-
-    setState(() {
-      _controller = controller;
-      _initializeControllerFuture = Future.value();
-    });
   }
 
   @override
@@ -53,49 +28,154 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
-  Future<void> _takePicture() async {
+  Future<void> _initCamera([int index = 0]) async {
+    final old = _controller;
+    setState(() {
+      _controller = null;
+      _error = null;
+    });
+    await old?.dispose();
+
     try {
-      if (!(_controller?.value.isInitialized ?? false)) return;
+      _cameras = await availableCameras();
+      if (_cameras.isEmpty) {
+        setState(() => _error = 'No cameras found.');
+        return;
+      }
 
-      final image = await _controller!.takePicture();
-      final bytes = await image.readAsBytes();
-
-      if (!mounted) return;
-
-      Navigator.of(Get.context!).pop({
-        'bytes': bytes,
-        'name': 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      final controller = CameraController(
+        _cameras[index],
+        ResolutionPreset.medium,
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+      await controller.initialize();
+      if (!mounted) {
+        controller.dispose();
+        return;
+      }
+      setState(() {
+        _controller = controller;
+        _cameraIndex = index;
       });
-    } catch (e) {
-      debugPrint('Camera error: $e');
+    } on CameraException catch (e) {
+      setState(
+        () => _error = e.code == 'CameraAccessDenied'
+            ? 'Permission denied. Enable camera in Settings.'
+            : 'Camera error: ${e.description}',
+      );
     }
+  }
+
+  Future<void> _takePicture() async {
+    if (!(_controller?.value.isInitialized ?? false)) return;
+    final image = await _controller!.takePicture();
+    final bytes = await image.readAsBytes();
+    if (!mounted) return;
+    Navigator.of(Get.context!).pop({
+      'bytes': bytes,
+      'name': 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Take a picture')),
-      body: FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              _controller != null) {
-            final controller = _controller!;
-            return Center(
-              child: AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
-                child: CameraPreview(controller),
-              ),
-            );
-          }
-          return const Center(child: CircularProgressIndicator());
-        },
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text('Take a photo'),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (_controller?.value.isInitialized ?? false)
-            ? _takePicture
-            : null,
-        child: const Icon(Icons.camera_alt),
+      body: SafeArea(child: _error != null ? _buildError() : _buildCamera()),
+    );
+  }
+
+  Widget _buildCamera() {
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
+    }
+
+    final isPortrait =
+        MediaQuery.of(context).orientation == Orientation.portrait;
+    final ratio = c.value.aspectRatio;
+    // Camera reports landscape ratio always — invert in portrait
+    final aspectRatio = isPortrait ? 1.0 / ratio : ratio;
+
+    // Use aspectRatio from controller — works correctly in both orientations
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      children: [
+        Center(
+          child: AspectRatio(aspectRatio: aspectRatio, child: CameraPreview(c)),
+        ),
+
+        Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              if (_cameras.length > 1)
+                IconButton(
+                  icon: const Icon(Icons.flip_camera_android, size: 32),
+                  color: Colors.blue,
+                  onPressed: () =>
+                      _initCamera((_cameraIndex + 1) % _cameras.length),
+                )
+              else
+                const SizedBox(width: 48),
+
+              GestureDetector(
+                onTap: _takePicture,
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.blue, width: 4),
+                    color: Colors.blue,
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 48),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.no_photography, color: Colors.white54, size: 60),
+            const SizedBox(height: 16),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+              onPressed: () => _initCamera(_cameraIndex),
+            ),
+          ],
+        ),
       ),
     );
   }

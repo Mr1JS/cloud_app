@@ -26,26 +26,28 @@ class ProfileDialog extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AvatarWidget(
-            imageUrl: imageUrl,
-            username: username,
-            radius: 40,
-            onEdit: onEditImage,
-          ),
-          const SizedBox(height: 12),
-          Text('Username: $username', overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 8),
-          Text('Email: $email', overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 25),
-          Text(
-            '© 2025 Cloud App.\n All rights reserved.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AvatarWidget(
+              imageUrl: imageUrl,
+              username: username,
+              radius: 40,
+              onEdit: onEditImage,
+            ),
+            const SizedBox(height: 12),
+            Text('Username: $username', overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 8),
+            Text('Email: $email', overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 25),
+            Text(
+              '© 2025 Cloud App.\n All rights reserved.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
