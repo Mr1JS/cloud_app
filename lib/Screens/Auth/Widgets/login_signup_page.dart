@@ -1,5 +1,3 @@
-import 'package:cloud_app/Screens/Auth/login_page.dart';
-import 'package:cloud_app/Screens/Auth/signup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_app/Services/auth_service.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -66,7 +64,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
         );
 
         // Redirect to login page
-        Get.offAndToNamed('/login');
+        Get.offAllNamed('/');
       }
     } catch (e) {
       if (!mounted) return;
@@ -278,14 +276,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
                         onPressed: _isLoading
                             ? null
                             : () {
-                                Navigator.pushReplacement(
-                                  Get.context!,
-                                  MaterialPageRoute(
-                                    builder: (context) => isLogin
-                                        ? const SignUpPage()
-                                        : const LogInPage(),
-                                  ),
-                                );
+                                Get.offAllNamed(isLogin ? '/signup' : '/');
                               },
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.blue[700],
