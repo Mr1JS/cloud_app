@@ -30,10 +30,10 @@ class MyHomePage extends StatelessWidget {
     await Get.dialog(
       Obx(
         () => Center(
-          child: SingleChildScrollView(
-            child: AlertDialog(
-              title: const Text('Upload Files'),
-              content: SizedBox(
+          child: AlertDialog(
+            title: const Text('Upload Files'),
+            content: SingleChildScrollView(
+              child: SizedBox(
                 width: 420,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -72,94 +72,102 @@ class MyHomePage extends StatelessWidget {
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        // Web: drag & drop picker
-                        if (kIsWeb)
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.upload_file, size: 16),
-                            label: const Text('Select Files'),
-                            onPressed: () {
-                              Get.dialog(
-                                AlertDialog(
-                                  title: const Text('Drop or Select Files'),
-                                  content: SingleChildScrollView(
-                                    child: DragAndDropWidget(
-                                      multiple: true,
-                                      onFilesConfirmed: (files) {
-                                        for (final f in files) {
-                                          pending.add((
-                                            name: f.filename,
-                                            bytes: Uint8List.fromList(f.bytes),
-                                          ));
-                                        }
-                                      },
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          // Web: drag & drop picker
+                          if (kIsWeb)
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.upload_file, size: 16),
+                              label: const Text('Select Files'),
+                              onPressed: () {
+                                Get.dialog(
+                                  AlertDialog(
+                                    title: const Text('Drop or Select Files'),
+                                    content: SingleChildScrollView(
+                                      child: DragAndDropWidget(
+                                        multiple: true,
+                                        onFilesConfirmed: (files) {
+                                          for (final f in files) {
+                                            pending.add((
+                                              name: f.filename,
+                                              bytes: Uint8List.fromList(
+                                                f.bytes,
+                                              ),
+                                            ));
+                                          }
+                                        },
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-
-                        // Mobile: native picker
-                        if (!kIsWeb)
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.upload_file, size: 16),
-                            label: const Text('Select Files'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                              textStyle: const TextStyle(fontSize: 13),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                );
+                              },
                             ),
-                            onPressed: () async {
-                              final files = await homeController.storage
-                                  .pickMultipleFiles();
-                              for (final f in files) {
-                                if (f.bytes != null) {
-                                  pending.add((name: f.name, bytes: f.bytes!));
+
+                          // Mobile: native picker
+                          if (!kIsWeb)
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.upload_file, size: 16),
+                              label: const Text('Select Files'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                                textStyle: const TextStyle(fontSize: 13),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () async {
+                                final files = await homeController.storage
+                                    .pickMultipleFiles();
+                                for (final f in files) {
+                                  if (f.bytes != null) {
+                                    pending.add((
+                                      name: f.name,
+                                      bytes: f.bytes!,
+                                    ));
+                                  }
                                 }
+                              },
+                            ),
+
+                          const SizedBox(width: 8),
+
+                          // Camera (web + mobile)
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.camera_alt), // size: 16),
+                            label: const Text('Take a photo'),
+                            style: !kIsWeb && Platform.isAndroid
+                                ? ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
+                                    textStyle: const TextStyle(fontSize: 13),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  )
+                                : null,
+                            onPressed: () async {
+                              final result = await Navigator.of(Get.context!)
+                                  .push<Map<String, dynamic>>(
+                                    MaterialPageRoute(
+                                      builder: (_) => const CameraScreen(),
+                                    ),
+                                  );
+                              if (result != null) {
+                                pending.add((
+                                  name: result['name'] as String,
+                                  bytes: result['bytes'] as Uint8List,
+                                ));
                               }
                             },
                           ),
-
-                        const SizedBox(width: 8),
-
-                        // Camera (web + mobile)
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.camera_alt), // size: 16),
-                          label: const Text('Take a photo'),
-                          style: !kIsWeb && Platform.isAndroid
-                              ? ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 8,
-                                  ),
-                                  textStyle: const TextStyle(fontSize: 13),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                )
-                              : null,
-                          onPressed: () async {
-                            final result = await Navigator.of(Get.context!)
-                                .push<Map<String, dynamic>>(
-                                  MaterialPageRoute(
-                                    builder: (_) => const CameraScreen(),
-                                  ),
-                                );
-                            if (result != null) {
-                              pending.add((
-                                name: result['name'] as String,
-                                bytes: result['bytes'] as Uint8List,
-                              ));
-                            }
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
                     // File list
@@ -212,61 +220,61 @@ class MyHomePage extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Actions
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: pending.isEmpty
-                      ? null
-                      : () async {
-                          Get.back();
-                          final folder = folderController.text.trim();
-                          final path = folder.isEmpty
-                              ? 'uploads'
-                              : folder == "profile"
-                              ? "profile1"
-                              : folder;
-                          int count = 0;
-                          for (final f in pending) {
-                            final resolvedName = await homeController.storage
-                                .resolveUniqueFilename(
-                                  userId: userId,
-                                  folder: path,
-                                  filename: f.name,
-                                );
-
-                            final url = await homeController.storage
-                                .uploadImageFromCamera(
-                                  userId: userId,
-                                  folder: path,
-                                  bytes: f.bytes,
-                                  filename: resolvedName,
-                                );
-                            if (url != null) count++;
-                          }
-                          if (count > 0) {
-                            homeController.refreshFiles();
-                            Get.showSnackbar(
-                              GetSnackBar(
-                                message: '$count file(s) uploaded!',
-                                backgroundColor: Colors.green,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
-                  child: Text(
-                    pending.isEmpty
-                        ? 'Upload'
-                        : 'Upload ${pending.length} file${pending.length > 1 ? 's' : ''}',
-                  ),
-                ),
-              ],
             ),
+
+            // Actions
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: pending.isEmpty
+                    ? null
+                    : () async {
+                        Get.back();
+                        final folder = folderController.text.trim();
+                        final path = folder.isEmpty
+                            ? 'uploads'
+                            : folder == "profile"
+                            ? "profile1"
+                            : folder;
+                        int count = 0;
+                        for (final f in pending) {
+                          final resolvedName = await homeController.storage
+                              .resolveUniqueFilename(
+                                userId: userId,
+                                folder: path,
+                                filename: f.name,
+                              );
+
+                          final url = await homeController.storage
+                              .uploadImageFromCamera(
+                                userId: userId,
+                                folder: path,
+                                bytes: f.bytes,
+                                filename: resolvedName,
+                              );
+                          if (url != null) count++;
+                        }
+                        if (count > 0) {
+                          homeController.refreshFiles();
+                          Get.showSnackbar(
+                            GetSnackBar(
+                              message: '$count file(s) uploaded!',
+                              backgroundColor: Colors.green,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                child: Text(
+                  pending.isEmpty
+                      ? 'Upload'
+                      : 'Upload ${pending.length} file${pending.length > 1 ? 's' : ''}',
+                ),
+              ),
+            ],
           ),
         ),
       ),

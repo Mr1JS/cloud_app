@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_app/Screens/Auth/login_page.dart';
 import 'package:cloud_app/Screens/Auth/signup_page.dart';
+import 'package:flutter/material.dart';
 import 'package:cloud_app/Services/auth_service.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
@@ -66,6 +66,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
         );
 
         // Redirect to login page
+        Get.offAndToNamed('/login');
       }
     } catch (e) {
       if (!mounted) return;

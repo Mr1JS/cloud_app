@@ -404,46 +404,49 @@ class _HomeSharedUIState extends State<HomeSharedUI> {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!item.isFolder) ...[
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!item.isFolder) ...[
+                _buildOptionTile(
+                  icon: Icons.preview,
+                  label: 'Preview',
+                  onTap: () {
+                    Navigator.pop(Get.context!);
+                    _homeController.showPreview(item);
+                  },
+                ),
+                _buildOptionTile(
+                  icon: Icons.download,
+                  label: 'Download',
+                  onTap: () {
+                    Navigator.pop(Get.context!);
+                    _homeController.downloadFile(item.fullPath, item.name);
+                  },
+                ),
+                _buildOptionTile(
+                  icon: Icons.share,
+                  label: 'Share',
+                  onTap: () {
+                    Navigator.pop(Get.context!);
+                    _homeController.shareLink(item.fullPath);
+                  },
+                ),
+              ],
               _buildOptionTile(
-                icon: Icons.preview,
-                label: 'Preview',
+                icon: Icons.delete,
+                label: 'Delete',
+                iconColor: Colors.red,
+                labelColor: Colors.red,
                 onTap: () {
                   Navigator.pop(Get.context!);
-                  _homeController.showPreview(item);
+                  _homeController.confirmDelete(item);
                 },
               ),
-              _buildOptionTile(
-                icon: Icons.download,
-                label: 'Download',
-                onTap: () {
-                  Navigator.pop(Get.context!);
-                  _homeController.downloadFile(item.fullPath, item.name);
-                },
-              ),
-              _buildOptionTile(
-                icon: Icons.share,
-                label: 'Share',
-                onTap: () {
-                  Navigator.pop(Get.context!);
-                  _homeController.shareLink(item.fullPath);
-                },
-              ),
+              SizedBox(height: 15),
             ],
-            _buildOptionTile(
-              icon: Icons.delete,
-              label: 'Delete',
-              iconColor: Colors.red,
-              labelColor: Colors.red,
-              onTap: () {
-                Navigator.pop(Get.context!);
-                _homeController.confirmDelete(item);
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );

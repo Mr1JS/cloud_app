@@ -1,3 +1,4 @@
+import 'package:cloud_app/Screens/Auth/signup_page.dart';
 import 'package:cloud_app/Themes/ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_app/Screens/Auth/login_page.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
       getPages: [
         GetPage(name: '/home', page: () => MyHomePage()),
         GetPage(name: '/login', page: () => LogInPage()),
+        GetPage(name: '/signup', page: () => SignUpPage()),
       ],
 
       // Listen to auth state changes and show --> login page or the home page

@@ -69,8 +69,12 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  
+  remove_alpha_ios: true
   image_path: "assets/splash_screen/cloud_icon.png"
+
+  web:
+    generate: true
+    image_path: "assets/splash_screen/cloud_icon.png"
 
 # The following section is specific to Flutter packages.
 flutter:
