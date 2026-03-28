@@ -1,4 +1,7 @@
+import 'package:cloud_app/Screens/Auth/PasswordReset/forgot_password_page.dart';
+import 'package:cloud_app/Screens/Auth/PasswordReset/reset_password_page.dart';
 import 'package:cloud_app/Screens/Auth/signup_page.dart';
+import 'package:cloud_app/Screens/Auth/PasswordReset/verify_otp_page.dart';
 import 'package:cloud_app/Themes/ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_app/Screens/Auth/login_page.dart';
@@ -34,11 +37,18 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system, // System says dark or light mode
       // All available app routes
       // /home --> Homepage
-      // /login --> Login/Signup page
+      // / --> Login page
+      // /signup --> Signup page
+      // /forgot-password --> Forgot password page
+      // /verify-otp --> Verify OTP page
+      // /reset-password --> Reset password page
       getPages: [
         GetPage(name: '/home', page: () => MyHomePage()),
-        GetPage(name: '/login', page: () => LogInPage()),
+        GetPage(name: '/', page: () => LogInPage()),
         GetPage(name: '/signup', page: () => SignUpPage()),
+        GetPage(name: '/forgot-password', page: () => ForgotPasswordPage()),
+        GetPage(name: '/verify-otp', page: () => const VerifyOtpPage()),
+        GetPage(name: '/reset-password', page: () => const ResetPasswordPage()),
       ],
 
       // Listen to auth state changes and show --> login page or the home page

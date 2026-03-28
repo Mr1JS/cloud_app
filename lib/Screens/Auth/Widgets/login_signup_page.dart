@@ -1,3 +1,4 @@
+import 'package:cloud_app/Screens/Auth/Utils/validators.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_app/Services/auth_service.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -25,18 +26,6 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
     email.dispose();
     password.dispose();
     super.dispose();
-  }
-
-  bool isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    return emailRegex.hasMatch(email);
-  }
-
-  bool isValidPassword(String password) {
-    if (password.length < 6) return false;
-    final hasUpperCase = RegExp(r'[A-Z]').hasMatch(password);
-    final hasLowerCase = RegExp(r'[a-z]').hasMatch(password);
-    return hasUpperCase && hasLowerCase;
   }
 
   Future<void> _handleSubmit() async {
@@ -164,12 +153,7 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
                             isSmallScreen ? 14 : 16,
                           ),
                         ),
-                        validator: (input) {
-                          if (input == null || input.isEmpty) {
-                            return 'Email is required';
-                          }
-                          return isValidEmail(input) ? null : "Invalid email";
-                        },
+                        validator: Validators.email,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
 
@@ -213,21 +197,10 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
                           ),
                         ),
                         obscureText: _obscurePassword,
-                        validator: (input) {
-                          if (isLogin) {
-                            if (input == null || input.isEmpty) {
-                              return 'Password is required';
-                            }
-                            return null;
-                          } else {
-                            if (input == null || input.isEmpty) {
-                              return 'Password is required';
-                            }
-                            return isValidPassword(input)
-                                ? null
-                                : 'Password must have upper & lower case, min 6 chars';
-                          }
-                        },
+                        validator: (input) => Validators.password(
+                          input,
+                          isLogin: widget.isLoginPage,
+                        ),
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
 
@@ -291,6 +264,25 @@ class _Logininsignuppagestate extends State<Loginsignuppage> {
                           ),
                         ),
                       ),
+
+                      if (isLogin)
+                        TextButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  Get.toNamed('/forgot-password');
+                                },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.blue[700],
+                          ),
+                          child: Text(
+                            "Forgot Password?",
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 13 : 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

@@ -113,7 +113,21 @@ In your Supabase project:
 <true/>
 ```
 
-### 5. Run
+### 5. PDF Viewer (Web only)
+
+In `web/index.html`, add this inside the `<body>` tag before `</body>`:
+```html
+<!-- PDF.js (required for Syncfusion PDF viewer on web) -->
+<script type="module" async="">
+  import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs';
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.worker.min.mjs";
+</script>
+```
+
+> Without this, PDF preview will silently fail on web.
+
+### 6. Run
 
 ```bash
 flutter run -d chrome --web-hostname localhost  # web
@@ -128,10 +142,16 @@ lib/
 ├── main.dart                        # Entry point, auth stream, routing
 ├── Screens/
 │   ├── Auth/
-│   │   └── Widgets/
-│   │   │   └── login_signup_page.dart   # Shared login/signup form widget
-│   │   ├── login_page.dart          # Login screen
-│   │   └── signup_page.dart         # Signup screen
+│	│   ├── login_page.dart          # Login screen
+│	│   ├── signup_page.dart         # Signup screen
+│	│	├── Utils/
+│	│	│   └── validators.dart		 # Shared form validators
+│	│   ├── Widgets/
+│	│   │   └── login_signup_page.dart   # Shared login/signup form widget
+│   │   └── PasswordReset/
+│   │       ├── forgot_password_page.dart	# Enter email, request OTP
+│   │       ├── verify_otp_page.dart		# Enter 6-digit OTP
+│   │       └── reset_password_page.dart	# Set new password
 │   ├── Camera/
 │   │   └── camera_screen.dart       # In-app camera (mobile + web)
 │   └── Home/
@@ -195,6 +215,11 @@ The sidebar shows a storage type breakdown (via `primer_progress_bar`) and your 
 - iOS: confirm `Info.plist` has `LSSupportsOpeningDocumentsInPlace` and `UIFileSharingEnabled` set to `true`
 - The native save-as dialog (via `file_saver`) opens automatically — no extra permissions needed
 - On web, files download directly to the browser's default download location
+
+**PDF preview not working on web:**
+- Make sure the PDF.js script is added to `web/index.html` inside `<body>` (see step 4)
+- Check browser console for `pdfjsLib` errors
+- Must use the exact version (`4.9.155`) that matches your `syncfusion_flutter_pdfviewer` version
  
  
 ```bash

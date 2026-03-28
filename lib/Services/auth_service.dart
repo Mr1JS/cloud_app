@@ -74,6 +74,36 @@ class AuthService {
     }
   }
 
+  // Send OTP to email for password reset
+  Future<void> sendOTP(String email) async {
+    await _supabase.auth.signInWithOtp(email: email, shouldCreateUser: false);
+  }
+
+  // Verify OTP for password reset
+  Future<void> verifyOtp(String email, String otp) async {
+    final response = await _supabase.auth.verifyOTP(
+      email: email,
+      token: otp,
+      type: OtpType.recovery,
+    );
+
+    // Ensure session exists
+    if (response.session == null) {
+      throw Exception('OTP verification failed. No session created.');
+    }
+  }
+
+  // Update password after OTP verification
+  Future<void> updatePassword(String newPassword) async {
+    final user = _supabase.auth.currentUser;
+
+    if (user == null) {
+      throw Exception('User not authenticated. Please verify OTP again.');
+    }
+
+    await _supabase.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
   // Sign out
   Future<void> signOut() => _supabase.auth.signOut(scope: SignOutScope.global);
 
